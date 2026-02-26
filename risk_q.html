@@ -213,42 +213,44 @@
         }
 
         // Huvudfunktion för att läsa från URL
-        function loadFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let encodedData = urlParams.get('data');
+function loadFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let encodedData = urlParams.get('data');
 
-            if (!encodedData) {
-                document.getElementById('status-message').textContent = "Ingen data hittades i URL. Använd ?data=[Base64-sträng]";
-                return;
-            }
+    if (!encodedData) {
+        document.getElementById('status-message').textContent = "Ingen data hittades i URL.";
+        return;
+    }
 
-            try {
-                // 1. Tvätta strängen från eventuella mellanslag och korrigera URL-säker Base64
-                let base64 = encodedData.trim().replace(/\s/g, '').replace(/-/g, '+').replace(/_/g, '/');
+    try {
+        // 1. Tvätta strängen: Ta bort ALLT som inte är giltigt i Base64 (A-Z, a-z, 0-9, +, /, =)
+        // Detta tar bort radbrytningar, dolda tecken och mellanslag.
+        let cleanedBase64 = encodedData.replace(/[^A-Za-z0-9+/=]/g, "");
 
-                // 2. Avkoda Base64 till en binär sträng
-                const binaryString = atob(base64);
+        // 2. Avkoda Base64 till en binär sträng
+        const binaryString = atob(cleanedBase64);
 
-                // 3. Omvandla binär data till UTF-8 (viktigt för å, ä, ö) med TextDecoder
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                const jsonString = new TextDecoder().decode(bytes);
-
-                // 4. Parsa JSON och rendera rapporten
-                const data = JSON.parse(jsonString);
-                renderData(data);
-                
-                // Dölj statusmeddelandet om allt gick bra
-                document.getElementById('status-message').style.display = 'none';
-            } catch (e) {
-                document.getElementById('status-message').innerHTML = 
-                    "<strong>Avkodningsfel:</strong> " + e.message + 
-                    "<br><small>Kontrollera att Base64-strängen i URL:en är korrekt kopierad.</small>";
-                console.error("Decoding error:", e);
-            }
+        // 3. Konvertera binär sträng till en array av bytes
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
         }
+
+        // 4. Avkoda bytes till UTF-8 text (viktigt för å, ä, ö)
+        const jsonString = new TextDecoder().decode(bytes);
+
+        // 5. Parsa och rendera
+        const data = JSON.parse(jsonString);
+        renderData(data);
+        
+        document.getElementById('status-message').style.display = 'none';
+    } catch (e) {
+        document.getElementById('status-message').innerHTML = 
+            "<strong>Kritiskt avkodningsfel:</strong> " + e.message + 
+            "<br><br>Felsökningstips: Se till att du kopierat hela koden från 'ey' till 'fQ==' utan att missa något tecken i slutet.";
+        console.error("Decoding error:", e);
+    }
+}
 
         function renderData(data) {
             // Grundinfo
