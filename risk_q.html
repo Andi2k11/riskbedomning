@@ -290,49 +290,56 @@
         }
 
 function handleInput() {
-    let input = document.getElementById('json-input').value.trim();
-    if (!input) return;
-
+    const status = document.getElementById('status-text');
+    const inputField = document.getElementById('json-input');
+    
     try {
-        let jsonString;
-        
-        // 1. Om det börjar med { är det vanlig JSON - kör direkt
-        if (input.startsWith('{')) {
-            jsonString = input;
-        } else {
-            // 2. Behandla som Base64
-            // Ta bort ALLT som inte är giltiga Base64-tecken (inkl. radbrytningar och osynliga tecken)
-            let cleanedBase64 = input.replace(/[^A-Za-z0-9+/=]/g, "");
-            
-            // Fixa eventuell saknad padding (=) i slutet
-            while (cleanedBase64.length % 4 !== 0) {
-                cleanedBase64 += "=";
-            }
+        // 1. Hämta texten och trimma bort mellanslag i början/slutet
+        let raw = inputField.value.trim();
+        if (!raw) return;
 
-            // Avkoda till binär data
-            const binary = atob(cleanedBase64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
+        let jsonStr;
+
+        if (raw.startsWith('{')) {
+            // Det är vanlig JSON
+            jsonStr = raw;
+        } else {
+            // 2. Det är Base64 - VIKTIG FIX HÄR:
+            // Vi tar bort ALLT som inte är A-Z, a-z, 0-9, +, / eller =
+            // Detta tar bort osynliga tecken, radbrytningar och "konstiga" mellanslag
+            let b64 = raw.replace(/[^A-Za-z0-9+/=]/g, "");
+            
+            // Kontrollera att strängen inte är tom efter tvätten
+            if (b64.length === 0) throw new Error("Strängen innehåller ingen giltig Base64-data.");
+
+            // Fixa padding (=) om den är ojämn
+            while (b64.length % 4 !== 0) b64 += "=";
+            
+            // Avkoda
+            const decodedData = atob(b64);
+            const bytes = new Uint8Array(decodedData.length);
+            for (let i = 0; i < decodedData.length; i++) {
+                bytes[i] = decodedData.charCodeAt(i);
             }
             
-            // Avkoda byten till UTF-8 text (för å, ä, ö)
-            jsonString = new TextDecoder().decode(bytes);
+            // Hantera svenska tecken (UTF-8)
+            jsonStr = new TextDecoder().decode(bytes);
         }
 
-        // 3. Tvätta JSON-strängen från dolda "control characters" (Fixar bild 1 & 2)
-        const sanitizedJson = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+        // 3. Slutlig städning av JSON (tar bort dolda styrtecken)
+        const cleanJson = jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
         
-        const data = JSON.parse(sanitizedJson);
-        populateUI(data);
+        // 4. Bygg rapporten
+        const parsedData = JSON.parse(cleanJson);
+        populateUI(parsedData);
         
-        document.getElementById('status-text').textContent = "Rapporten har genererats framgångsrikt!";
-        document.getElementById('status-text').style.color = "green";
+        status.textContent = "Rapporten genererad!";
+        status.style.color = "green";
+        
     } catch (e) {
-        document.getElementById('status-text').innerHTML = 
-            "<strong>Kunde inte läsa datan.</strong><br>Tekniskt fel: " + e.message;
-        document.getElementById('status-text').style.color = "red";
-        console.error("Decoding error details:", e);
+        console.error("Detaljerat fel:", e);
+        status.innerHTML = "<strong>Kunde inte läsa datan.</strong><br>Tips: Kopiera hela koden igen.<br>Felmeddelande: " + e.message;
+        status.style.color = "red";
     }
 }</script></body>
 </html>
