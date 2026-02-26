@@ -64,11 +64,10 @@
         @media print {
             #json-input-container { display: none; }
             body { padding: 0; }
-            /* Tar bort markeringar för redigerbara fält vid utskrift */
             [contenteditable="true"] { outline: none; }
         }
 
-        /* Redigerings-styling (visas bara på skärm) */
+        /* Redigerings-styling */
         [contenteditable="true"]:hover {
             background-color: #f9f9f9;
             outline: 1px dashed #4472C4;
@@ -134,10 +133,7 @@
             font-size: 9pt;
         }
 
-        #tblAnpassning td {
-            height: 30mm;
-        }
-
+        #tblAnpassning td { height: 30mm; }
         .col-20 { width: 20%; }
         .col-40 { width: 40%; }
         .col-80 { width: 80%; }
@@ -152,7 +148,7 @@
             margin-right: 1mm;
         }
 
-        /* Piktogram-URLer bibehållna */
+        /* Piktogram-URLer */
         .ghs01 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/4a/GHS-pictogram-explos.svg'); }
         .ghs02 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/6/6d/GHS-pictogram-flamme.svg'); }
         .ghs03 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/e5/GHS-pictogram-rondflam.svg'); }
@@ -169,17 +165,16 @@
 <body>
 
     <div id="json-input-container">
-        <h3>Klistra in JSON-data</h3>
-        <textarea id="json-input" placeholder='Klistra in JSON här...'></textarea>
+        <h3>Klistra in Base64 eller JSON-data</h3>
+        <textarea id="json-input" placeholder='Klistra in Base64-strängen eller JSON-koden här...'></textarea>
         <div class="controls">
-            <button onclick="generateReportManually()">Generera Riskbedömning</button>
-            <span id="status-text" class="edit-hint">Efter generering: Klicka var som helst i dokumentet för att ändra texten manuellt.</span>
+            <button onclick="handleInput()">Generera Rapport</button>
+            <span id="status-text" class="edit-hint">Klicka i dokumentet efter generering för att finjustera texten.</span>
         </div>
     </div>
 
     <div id="report-content">
         <img src="https://vellinge.se/siteassets/kommun-och-politik/pressrum/vellinge_kommun_logotyp_brakvalitet.png" class="logo" alt="Vellinge kommun">
-
         <h1>Underlag för riskbedömning</h1>
         <h2 id="display-titel" contenteditable="true">- </h2>
 
@@ -244,6 +239,7 @@
     </div>
 
     <script>
+        // Hjälpfunktioner
         function createList(items) {
             if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
             return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
@@ -252,40 +248,30 @@
         function renderPiktogram(piktogramStr) {
             if (!piktogramStr) return "";
             const matches = piktogramStr.match(/GHS0[1-9]/gi);
-            if (!matches) return "";
-            return matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('');
+            return matches ? matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('') : "";
         }
 
-        // Delad funktion för att fylla i tabellerna
+        // Kärnfunktion för att fylla HTML-koden
         function populateUI(data) {
-            // Grundinfo
             document.getElementById('display-titel').textContent = "- " + (data.TITEL || "");
             document.getElementById('display-datum').textContent = data.DATUM || "";
 
-            // Kemikalier
             const kemBody = document.querySelector('#tblKemikalier tbody');
             kemBody.innerHTML = (data.KEMIKALIER || []).map(k => `
                 <tr class="content-cell-small">
                     <td contenteditable="true"><strong>${k.KEMIKALIENAMN}</strong></td>
-                    <td>
-                        <div contenteditable="false">${renderPiktogram(k.PIKTOGRAM)}</div>
-                        ${createList(k.FAROANGIVELSER)}
-                    </td>
+                    <td><div contenteditable="false">${renderPiktogram(k.PIKTOGRAM)}</div>${createList(k.FAROANGIVELSER)}</td>
                     <td contenteditable="true">${createList(k.VID_INCIDENT)}</td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
 
-            // Arbetsmoment
             const arbBody = document.querySelector('#tblArbetsmoment tbody');
             arbBody.innerHTML = (data.ARBETSMOMENT_LISTA || []).map(a => `
                 <tr class="content-cell-small">
                     <td contenteditable="true">${a.ARBETSMOMENT}</td>
                     <td contenteditable="true">${a.BESKRIVNING}</td>
                     <td contenteditable="true">${createList(a.VID_INCIDENT)}</td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
 
-            // Riskanalys
             const riskBody = document.querySelector('#tblRiskanalys tbody');
             riskBody.innerHTML = (data.RISK_ANALYS || []).map(r => `
                 <tr class="content-cell-small">
@@ -294,72 +280,41 @@
                     <td contenteditable="true" style="text-align:center">${r.SANNOLIKHET}</td>
                     <td contenteditable="true" style="text-align:center">${r.KONSEKVENS}</td>
                     <td contenteditable="true"><strong>${r.RISKVAL}</strong> (${r.RISKNIVÅ || ''})</td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
 
-            // Övrigt
             const ovr = data.OVRIGT || {};
             const labOk = ovr.LAMPLIG_SOM_LABORATION || {};
-            const ovrigtTable = document.getElementById('tblOvrigt');
-            ovrigtTable.innerHTML = `
-                <tr>
-                    <td class="col-20 label-cell">Förebyggande skyddsåtgärder</td>
-                    <td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.FOREBYGGANDE_ATGARDER)}</td>
-                </tr>
-                <tr>
-                    <td class="col-20 label-cell">Avfallshantering</td>
-                    <td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.AVFALLSHANTERING)}</td>
-                </tr>
-                <tr>
-                    <td class="col-20 label-cell">Lämplig som laboration</td>
-                    <td class="col-80 content-cell-small" contenteditable="true">
-                        <strong>${labOk.JA_NEJ || ""}</strong><br>
-                        ${labOk.FORUTSATTNINGAR || ""}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="col-20 label-cell">Övriga kommentarer</td>
-                    <td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td>
-                </tr>
-            `;
+            document.getElementById('tblOvrigt').innerHTML = `
+                <tr><td class="col-20 label-cell">Förebyggande skyddsåtgärder</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.FOREBYGGANDE_ATGARDER)}</td></tr>
+                <tr><td class="col-20 label-cell">Avfallshantering</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.AVFALLSHANTERING)}</td></tr>
+                <tr><td class="col-20 label-cell">Lämplig som laboration</td><td class="col-80 content-cell-small" contenteditable="true"><strong>${labOk.JA_NEJ || ""}</strong><br>${labOk.FORUTSATTNINGAR || ""}</td></tr>
+                <tr><td class="col-20 label-cell">Övriga kommentarer</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td></tr>`;
         }
 
-        // Funktion för knappen (manuell inmatning)
-        function generateReportManually() {
-            const jsonText = document.getElementById('json-input').value;
+        // Funktion som hanterar innehållet i textrutan
+        function handleInput() {
+            let input = document.getElementById('json-input').value.trim();
+            if (!input) return;
+
             try {
-                const data = JSON.parse(jsonText);
-                populateUI(data);
-            } catch (e) {
-                alert("Felaktig JSON-format: " + e.message);
-            }
-        }
-
-        // Automatisk inläsning från URL vid start
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const encodedData = urlParams.get('data');
-
-            if (encodedData) {
-                try {
-                    // 1. Tvätta bort skräptecken
-                    let cleaned = encodedData.replace(/[^A-Za-z0-9+/=]/g, "");
-                    // 2. Avkoda med TextDecoder för att klara å, ä, ö
+                let data;
+                // Om texten börjar med { är det vanlig JSON
+                if (input.startsWith('{')) {
+                    data = JSON.parse(input);
+                } else {
+                    // Annars behandlar vi det som Base64 (med "tvätt" för säkerhets skull)
+                    let cleaned = input.replace(/[^A-Za-z0-9+/=]/g, "");
                     const binary = atob(cleaned);
                     const bytes = new Uint8Array(binary.length);
                     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                    const data = JSON.parse(new TextDecoder().decode(bytes));
-                    
-                    // 3. Fyll i dokumentet
-                    populateUI(data);
-                    
-                    // 4. Visa info för användaren
-                    document.getElementById('status-text').textContent = "Data laddades automatiskt från länken!";
-                } catch (e) {
-                    console.error("URL-laddning misslyckades:", e);
+                    data = JSON.parse(new TextDecoder().decode(bytes));
                 }
+                populateUI(data);
+                document.getElementById('status-text').textContent = "Rapporten har genererats!";
+            } catch (e) {
+                alert("Kunde inte läsa datan. Kontrollera att det är korrekt JSON eller Base64.\nFel: " + e.message);
             }
-        };
+        }
     </script>
 </body>
 </html>
