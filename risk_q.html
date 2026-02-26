@@ -289,37 +289,46 @@
                 <tr><td class="col-20 label-cell">Övriga kommentarer</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td></tr>`;
         }
 
-        function handleInput() {
-            let input = document.getElementById('json-input').value.trim();
-            if (!input) return;
+function handleInput() {
+    let input = document.getElementById('json-input').value.trim();
+    if (!input) return;
 
-            try {
-                let jsonString;
-                
-                // Kontrollera om det är Base64 eller JSON
-                if (input.startsWith('{')) {
-                    jsonString = input;
-                } else {
-                    // Avkoda Base64
-                    let cleanedBase64 = input.replace(/[^A-Za-z0-9+/=]/g, "");
-                    const binary = atob(cleanedBase64);
-                    const bytes = new Uint8Array(binary.length);
-                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                    jsonString = new TextDecoder().decode(bytes);
-                }
-
-                // FIX: Ta bort "control characters" (osynliga radbrytningar/tabbar inuti strängar)
-                // Detta löser felet "Bad control character in string literal"
-                const sanitizedJson = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-                
-                const data = JSON.parse(sanitizedJson);
-                populateUI(data);
-                document.getElementById('status-text').textContent = "Rapporten har genererats!";
-            } catch (e) {
-                alert("Kunde inte läsa datan. Kontrollera att det är korrekt JSON eller Base64.\n\nTips: Se till att inga tecken saknas i början eller slutet.\n\nFel: " + e.message);
-                console.error(e);
-            }
+    try {
+        let jsonString;
+        
+        // 1. Avgör om det är Base64 eller JSON
+        if (input.startsWith('{') || input.startsWith('[')) {
+            jsonString = input;
+        } else {
+            // Avkoda Base64 med "tvätt" av otillåtna tecken (som de kinesiska tecknen från tidigare)
+            let cleanedBase64 = input.replace(/[^A-Za-z0-9+/=]/g, "");
+            const binary = atob(cleanedBase64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            jsonString = new TextDecoder().decode(bytes);
         }
-    </script>
-</body>
+
+        // 2. SANERING AV STRÄNGEN
+        // Ersätt riktiga radbrytningar och tabbar inuti strängen med mellanslag 
+        // (JSON tillåter inte "äkta" radbrytningar inuti citattecken)
+        let sanitizedJson = jsonString
+            .replace(/\n/g, " ") 
+            .replace(/\r/g, " ")
+            .replace(/\t/g, " ")
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, ""); // Ta bort osynliga styrtecken
+
+        // 3. Försök parsa
+        const data = JSON.parse(sanitizedJson);
+        populateUI(data);
+        
+        document.getElementById('status-text').textContent = "Rapporten har genererats!";
+        document.getElementById('status-text').style.color = "green";
+    } catch (e) {
+        // Om det skiter sig, visa ett tydligt felmeddelande
+        document.getElementById('status-text').innerHTML = 
+            "<strong>Kunde inte läsa datan.</strong><br>Fel: " + e.message;
+        document.getElementById('status-text').style.color = "red";
+        console.error("Detailed error:", e);
+    }
+}</body>
 </html>
