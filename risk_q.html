@@ -238,108 +238,92 @@
         </table>
     </div>
 
-    <script>
-        function createList(items) {
-            if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
-            return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
-        }
-
-        function renderPiktogram(piktogramStr) {
-            if (!piktogramStr) return "";
-            const matches = piktogramStr.match(/GHS0[1-9]/gi);
-            return matches ? matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('') : "";
-        }
-
-        function populateUI(data) {
-            document.getElementById('display-titel').textContent = "- " + (data.TITEL || "");
-            document.getElementById('display-datum').textContent = data.DATUM || "";
-
-            const kemBody = document.querySelector('#tblKemikalier tbody');
-            kemBody.innerHTML = (data.KEMIKALIER || []).map(k => `
-                <tr class="content-cell-small">
-                    <td contenteditable="true"><strong>${k.KEMIKALIENAMN}</strong></td>
-                    <td><div contenteditable="false">${renderPiktogram(k.PIKTOGRAM)}</div>${createList(k.FAROANGIVELSER)}</td>
-                    <td contenteditable="true">${createList(k.VID_INCIDENT)}</td>
-                </tr>`).join('');
-
-            const arbBody = document.querySelector('#tblArbetsmoment tbody');
-            arbBody.innerHTML = (data.ARBETSMOMENT_LISTA || []).map(a => `
-                <tr class="content-cell-small">
-                    <td contenteditable="true">${a.ARBETSMOMENT}</td>
-                    <td contenteditable="true">${a.BESKRIVNING}</td>
-                    <td contenteditable="true">${createList(a.VID_INCIDENT)}</td>
-                </tr>`).join('');
-
-            const riskBody = document.querySelector('#tblRiskanalys tbody');
-            riskBody.innerHTML = (data.RISK_ANALYS || []).map(r => `
-                <tr class="content-cell-small">
-                    <td contenteditable="true">${r.RISKKÄLLA}</td>
-                    <td contenteditable="true">${r.BESKRIVNING}</td>
-                    <td contenteditable="true" style="text-align:center">${r.SANNOLIKHET}</td>
-                    <td contenteditable="true" style="text-align:center">${r.KONSEKVENS}</td>
-                    <td contenteditable="true"><strong>${r.RISKVAL}</strong> (${r.RISKNIVÅ || ''})</td>
-                </tr>`).join('');
-
-            const ovr = data.OVRIGT || {};
-            const labOk = ovr.LAMPLIG_SOM_LABORATION || {};
-            document.getElementById('tblOvrigt').innerHTML = `
-                <tr><td class="col-20 label-cell">Förebyggande skyddsåtgärder</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.FOREBYGGANDE_ATGARDER)}</td></tr>
-                <tr><td class="col-20 label-cell">Avfallshantering</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.AVFALLSHANTERING)}</td></tr>
-                <tr><td class="col-20 label-cell">Lämplig som laboration</td><td class="col-80 content-cell-small" contenteditable="true"><strong>${labOk.JA_NEJ || ""}</strong><br>${labOk.FORUTSATTNINGAR || ""}</td></tr>
-                <tr><td class="col-20 label-cell">Övriga kommentarer</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td></tr>`;
-        }
-
-function handleInput() {
-    const status = document.getElementById('status-text');
-    const inputField = document.getElementById('json-input');
-    
-    try {
-        // 1. Hämta texten och trimma bort mellanslag i början/slutet
-        let raw = inputField.value.trim();
-        if (!raw) return;
-
-        let jsonStr;
-
-        if (raw.startsWith('{')) {
-            // Det är vanlig JSON
-            jsonStr = raw;
-        } else {
-            // 2. Det är Base64 - VIKTIG FIX HÄR:
-            // Vi tar bort ALLT som inte är A-Z, a-z, 0-9, +, / eller =
-            // Detta tar bort osynliga tecken, radbrytningar och "konstiga" mellanslag
-            let b64 = raw.replace(/[^A-Za-z0-9+/=]/g, "");
-            
-            // Kontrollera att strängen inte är tom efter tvätten
-            if (b64.length === 0) throw new Error("Strängen innehåller ingen giltig Base64-data.");
-
-            // Fixa padding (=) om den är ojämn
-            while (b64.length % 4 !== 0) b64 += "=";
-            
-            // Avkoda
-            const decodedData = atob(b64);
-            const bytes = new Uint8Array(decodedData.length);
-            for (let i = 0; i < decodedData.length; i++) {
-                bytes[i] = decodedData.charCodeAt(i);
-            }
-            
-            // Hantera svenska tecken (UTF-8)
-            jsonStr = new TextDecoder().decode(bytes);
-        }
-
-        // 3. Slutlig städning av JSON (tar bort dolda styrtecken)
-        const cleanJson = jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-        
-        // 4. Bygg rapporten
-        const parsedData = JSON.parse(cleanJson);
-        populateUI(parsedData);
-        
-        status.textContent = "Rapporten genererad!";
-        status.style.color = "green";
-        
-    } catch (e) {
-        console.error("Detaljerat fel:", e);
-        status.innerHTML = "<strong>Kunde inte läsa datan.</strong><br>Tips: Kopiera hela koden igen.<br>Felmeddelande: " + e.message;
-        status.style.color = "red";
+<script>
+    function createList(items) {
+        if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
+        return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
     }
-}</script></body>
+
+    function renderPiktogram(piktogramStr) {
+        if (!piktogramStr) return "";
+        const matches = piktogramStr.match(/GHS0[1-9]/gi);
+        return matches ? matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('') : "";
+    }
+
+    function populateUI(data) {
+        document.getElementById('display-titel').textContent = "- " + (data.TITEL || "");
+        document.getElementById('display-datum').textContent = data.DATUM || "";
+
+        const kemBody = document.querySelector('#tblKemikalier tbody');
+        kemBody.innerHTML = (data.KEMIKALIER || []).map(k => `
+            <tr class="content-cell-small">
+                <td contenteditable="true"><strong>${k.KEMIKALIENAMN}</strong></td>
+                <td><div contenteditable="false">${renderPiktogram(k.PIKTOGRAM)}</div>${createList(k.FAROANGIVELSER)}</td>
+                <td contenteditable="true">${createList(k.VID_INCIDENT)}</td>
+            </tr>`).join('');
+
+        const arbBody = document.querySelector('#tblArbetsmoment tbody');
+        arbBody.innerHTML = (data.ARBETSMOMENT_LISTA || []).map(a => `
+            <tr class="content-cell-small">
+                <td contenteditable="true">${a.ARBETSMOMENT}</td>
+                <td contenteditable="true">${a.BESKRIVNING}</td>
+                <td contenteditable="true">${createList(a.VID_INCIDENT)}</td>
+            </tr>`).join('');
+
+        const riskBody = document.querySelector('#tblRiskanalys tbody');
+        riskBody.innerHTML = (data.RISK_ANALYS || []).map(r => `
+            <tr class="content-cell-small">
+                <td contenteditable="true">${r.RISKKÄLLA}</td>
+                <td contenteditable="true">${r.BESKRIVNING}</td>
+                <td contenteditable="true" style="text-align:center">${r.SANNOLIKHET}</td>
+                <td contenteditable="true" style="text-align:center">${r.KONSEKVENS}</td>
+                <td contenteditable="true"><strong>${r.RISKVAL}</strong> (${r.RISKNIVÅ || ''})</td>
+            </tr>`).join('');
+
+        const ovr = data.OVRIGT || {};
+        const labOk = ovr.LAMPLIG_SOM_LABORATION || {};
+        document.getElementById('tblOvrigt').innerHTML = `
+            <tr><td class="col-20 label-cell">Förebyggande skyddsåtgärder</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.FOREBYGGANDE_ATGARDER)}</td></tr>
+            <tr><td class="col-20 label-cell">Avfallshantering</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.AVFALLSHANTERING)}</td></tr>
+            <tr><td class="col-20 label-cell">Lämplig som laboration</td><td class="col-80 content-cell-small" contenteditable="true"><strong>${labOk.JA_NEJ || ""}</strong><br>${labOk.FORUTSATTNINGAR || ""}</td></tr>
+            <tr><td class="col-20 label-cell">Övriga kommentarer</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td></tr>`;
+    }
+
+    // DENNA FUNKTION ÄR UPPDATERAD FÖR ATT VARA "SKOTTSÄKER"
+    async function handleInput() {
+        const status = document.getElementById('status-text');
+        let input = document.getElementById('json-input').value.trim();
+        if (!input) return;
+
+        try {
+            let jsonString;
+
+            if (input.startsWith('{')) {
+                jsonString = input;
+            } else {
+                // 1. Tvätta bort allt som inte är Base64-tecken
+                const cleaned = input.replace(/[^A-Za-z0-9+/=]/g, "");
+                
+                // 2. Använd en säkrare metod för att avkoda Base64 till UTF-8
+                // Vi skapar en data-URL och låter webbläsarens inbyggda fetch sköta avkodningen
+                const response = await fetch("data:text/plain;base64," + cleaned);
+                if (!response.ok) throw new Error("Base64-avkodning misslyckades.");
+                jsonString = await response.text();
+            }
+
+            // 3. Ta bort dolda kontrolltecken som kan sabba JSON.parse
+            const sanitizedJson = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+            
+            const data = JSON.parse(sanitizedJson);
+            populateUI(data);
+
+            status.textContent = "Rapporten har genererats!";
+            status.style.color = "green";
+        } catch (e) {
+            console.error("Detaljerat fel:", e);
+            status.innerHTML = "<strong>Fel:</strong> " + e.message;
+            status.style.color = "red";
+        }
+    }
+</script></body>
 </html>
