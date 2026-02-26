@@ -239,7 +239,6 @@
     </div>
 
     <script>
-        // Hjälpfunktioner
         function createList(items) {
             if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
             return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
@@ -251,7 +250,6 @@
             return matches ? matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('') : "";
         }
 
-        // Kärnfunktion för att fylla HTML-koden
         function populateUI(data) {
             document.getElementById('display-titel').textContent = "- " + (data.TITEL || "");
             document.getElementById('display-datum').textContent = data.DATUM || "";
@@ -291,28 +289,35 @@
                 <tr><td class="col-20 label-cell">Övriga kommentarer</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td></tr>`;
         }
 
-        // Funktion som hanterar innehållet i textrutan
         function handleInput() {
             let input = document.getElementById('json-input').value.trim();
             if (!input) return;
 
             try {
-                let data;
-                // Om texten börjar med { är det vanlig JSON
+                let jsonString;
+                
+                // Kontrollera om det är Base64 eller JSON
                 if (input.startsWith('{')) {
-                    data = JSON.parse(input);
+                    jsonString = input;
                 } else {
-                    // Annars behandlar vi det som Base64 (med "tvätt" för säkerhets skull)
-                    let cleaned = input.replace(/[^A-Za-z0-9+/=]/g, "");
-                    const binary = atob(cleaned);
+                    // Avkoda Base64
+                    let cleanedBase64 = input.replace(/[^A-Za-z0-9+/=]/g, "");
+                    const binary = atob(cleanedBase64);
                     const bytes = new Uint8Array(binary.length);
                     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                    data = JSON.parse(new TextDecoder().decode(bytes));
+                    jsonString = new TextDecoder().decode(bytes);
                 }
+
+                // FIX: Ta bort "control characters" (osynliga radbrytningar/tabbar inuti strängar)
+                // Detta löser felet "Bad control character in string literal"
+                const sanitizedJson = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+                
+                const data = JSON.parse(sanitizedJson);
                 populateUI(data);
                 document.getElementById('status-text').textContent = "Rapporten har genererats!";
             } catch (e) {
-                alert("Kunde inte läsa datan. Kontrollera att det är korrekt JSON eller Base64.\nFel: " + e.message);
+                alert("Kunde inte läsa datan. Kontrollera att det är korrekt JSON eller Base64.\n\nTips: Se till att inga tecken saknas i början eller slutet.\n\nFel: " + e.message);
+                console.error(e);
             }
         }
     </script>
