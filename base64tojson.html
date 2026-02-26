@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <title>Base64 Testpanel</title>
+    <title>Base64 Testpanel - Update 1</title>
     <style>
         body { font-family: sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: 0 auto; background: #f0f0f0; }
         textarea { width: 100%; height: 150px; margin-top: 10px; font-family: monospace; }
@@ -28,49 +28,46 @@
         <pre id="output"></pre>
     </div>
 
-    <script>
-        // Funktion för att avkoda Base64 till UTF-8 text
-        async function robustDecode(base64Str) {
+<script>
+        function robustDecode(base64Str) {
             try {
-                // Rensa strängen från mellanslag och radbrytningar
+                // 1. Rensa strängen från ogiltiga tecken (mellanslag, radbrytningar etc.)
                 const cleaned = base64Str.replace(/[^A-Za-z0-9+/=]/g, "");
                 
-                // Använd data-URL tricket för att hantera UTF-8/Svenska tecken perfekt
-                const res = await fetch("data:text/plain;base64," + cleaned);
-                if (!res.ok) throw new Error("Ogiltig Base64-data");
-                return await res.text();
+                // 2. Avkoda till en binär sträng
+                const binaryString = atob(cleaned);
+                
+                // 3. Omvandla binär sträng till en array av bytes
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // 4. Avkoda byten som UTF-8 (viktigt för å, ä, ö)
+                return new TextDecoder().decode(bytes);
             } catch (e) {
-                return "FEL: " + e.message;
+                return "FEL vid avkodning: " + e.message;
             }
         }
 
-        // Hantera manuell inmatning
-        async function decodeManual() {
+        function decodeManual() {
             const val = document.getElementById('input').value;
             const output = document.getElementById('output');
             const status = document.getElementById('status');
             
             status.textContent = "Avkodar...";
-            const result = await robustDecode(val);
+            const result = robustDecode(val);
             
-            if (result.startsWith("FEL:")) {
-                output.className = "error";
-            } else {
-                output.className = "";
-            }
             output.textContent = result;
-            status.textContent = "Klar!";
+            status.textContent = result.startsWith("FEL") ? "Misslyckades" : "Klar!";
         }
 
-        // Kontrollera Query Parameter (?data=) vid start
-        window.onload = async () => {
+        window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const data = urlParams.get('data');
-            
             if (data) {
                 document.getElementById('input').value = data;
-                status.textContent = "Hittade data i URL, avkodar...";
-                await decodeManual();
+                decodeManual();
             }
         };
     </script>
