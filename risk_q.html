@@ -296,39 +296,43 @@ function handleInput() {
     try {
         let jsonString;
         
-        // 1. Avgör om det är Base64 eller JSON
-        if (input.startsWith('{') || input.startsWith('[')) {
+        // 1. Om det börjar med { är det vanlig JSON - kör direkt
+        if (input.startsWith('{')) {
             jsonString = input;
         } else {
-            // Avkoda Base64 med "tvätt" av otillåtna tecken (som de kinesiska tecknen från tidigare)
+            // 2. Behandla som Base64
+            // Ta bort ALLT som inte är giltiga Base64-tecken (inkl. radbrytningar och osynliga tecken)
             let cleanedBase64 = input.replace(/[^A-Za-z0-9+/=]/g, "");
+            
+            // Fixa eventuell saknad padding (=) i slutet
+            while (cleanedBase64.length % 4 !== 0) {
+                cleanedBase64 += "=";
+            }
+
+            // Avkoda till binär data
             const binary = atob(cleanedBase64);
             const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            
+            // Avkoda byten till UTF-8 text (för å, ä, ö)
             jsonString = new TextDecoder().decode(bytes);
         }
 
-        // 2. SANERING AV STRÄNGEN
-        // Ersätt riktiga radbrytningar och tabbar inuti strängen med mellanslag 
-        // (JSON tillåter inte "äkta" radbrytningar inuti citattecken)
-        let sanitizedJson = jsonString
-            .replace(/\n/g, " ") 
-            .replace(/\r/g, " ")
-            .replace(/\t/g, " ")
-            .replace(/[\u0000-\u001F\u007F-\u009F]/g, ""); // Ta bort osynliga styrtecken
-
-        // 3. Försök parsa
+        // 3. Tvätta JSON-strängen från dolda "control characters" (Fixar bild 1 & 2)
+        const sanitizedJson = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+        
         const data = JSON.parse(sanitizedJson);
         populateUI(data);
         
-        document.getElementById('status-text').textContent = "Rapporten har genererats!";
+        document.getElementById('status-text').textContent = "Rapporten har genererats framgångsrikt!";
         document.getElementById('status-text').style.color = "green";
     } catch (e) {
-        // Om det skiter sig, visa ett tydligt felmeddelande
         document.getElementById('status-text').innerHTML = 
-            "<strong>Kunde inte läsa datan.</strong><br>Fel: " + e.message;
+            "<strong>Kunde inte läsa datan.</strong><br>Tekniskt fel: " + e.message;
         document.getElementById('status-text').style.color = "red";
-        console.error("Detailed error:", e);
+        console.error("Decoding error details:", e);
     }
 }</body>
 </html>
