@@ -129,7 +129,7 @@
 </head>
 <body>
 
-    <div id="status-message">Väntar på data från URL...</div>
+    <div id="status-message">Läser in data från URL...</div>
 
     <div id="report-content">
         <img src="https://vellinge.se/siteassets/kommun-och-politik/pressrum/vellinge_kommun_logotyp_brakvalitet.png" class="logo" alt="Vellinge kommun">
@@ -198,11 +198,13 @@
     </div>
 
     <script>
+        // Funktion för att skapa punktlistor
         function createList(items) {
             if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
             return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
         }
 
+        // Funktion för att rendera piktogram-ikoner
         function renderPiktogram(piktogramStr) {
             if (!piktogramStr) return "";
             const matches = piktogramStr.match(/GHS0[1-9]/gi);
@@ -210,25 +212,41 @@
             return matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('');
         }
 
+        // Huvudfunktion för att läsa från URL
         function loadFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const encodedData = urlParams.get('data');
+            let encodedData = urlParams.get('data');
 
             if (!encodedData) {
-                document.getElementById('status-message').textContent = "Ingen data hittades i URL. Använd ?data=[Base64]";
+                document.getElementById('status-message').textContent = "Ingen data hittades i URL. Använd ?data=[Base64-sträng]";
                 return;
             }
 
             try {
-                // Avkoda Base64 med stöd för svenska tecken (UTF-8)
-                const jsonString = decodeURIComponent(escape(atob(encodedData)));
+                // 1. Tvätta strängen från eventuella mellanslag och korrigera URL-säker Base64
+                let base64 = encodedData.trim().replace(/\s/g, '').replace(/-/g, '+').replace(/_/g, '/');
+
+                // 2. Avkoda Base64 till en binär sträng
+                const binaryString = atob(base64);
+
+                // 3. Omvandla binär data till UTF-8 (viktigt för å, ä, ö) med TextDecoder
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const jsonString = new TextDecoder().decode(bytes);
+
+                // 4. Parsa JSON och rendera rapporten
                 const data = JSON.parse(jsonString);
-                
                 renderData(data);
+                
+                // Dölj statusmeddelandet om allt gick bra
                 document.getElementById('status-message').style.display = 'none';
             } catch (e) {
-                document.getElementById('status-message').textContent = "Ett fel uppstod vid avkodning: " + e.message;
-                console.error(e);
+                document.getElementById('status-message').innerHTML = 
+                    "<strong>Avkodningsfel:</strong> " + e.message + 
+                    "<br><small>Kontrollera att Base64-strängen i URL:en är korrekt kopierad.</small>";
+                console.error("Decoding error:", e);
             }
         }
 
@@ -299,7 +317,7 @@
             `;
         }
 
-        // Kör vid laddning
+        // Kör funktionen när sidan laddas
         window.onload = loadFromUrl;
     </script>
 </body>
