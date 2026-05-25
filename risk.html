@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     
     <style>
-        /* Utskriftsinställningar för A4 */
+        /* Standardinställning för skärm */
         @page {
             size: A4;
             margin: 15mm;
@@ -23,7 +23,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: Calibri, "Open Sans", Arial, sans-serif; /* Prioriterar Calibri, sedan Open Sans */
+            font-family: Calibri, "Open Sans", Arial, sans-serif;
             line-height: 1.2;
         }
 
@@ -67,10 +67,15 @@
             font-style: italic;
         }
 
+        /* Behållare för själva rapportinnehållet */
+        #report-content {
+            padding: 0;
+        }
+
         /* Layout-behållare för logga + rubrik */
         .header-container {
             display: flex;
-            align-items: center; /* Centrerar rubriken vertikalt i nivå med loggan */
+            align-items: center;
             margin-bottom: 5mm;
         }
 
@@ -78,21 +83,21 @@
             width: 70mm; /* Bredden är 7 cm */
             height: auto;
             display: block;
-            flex-shrink: 0; /* Förhindrar att loggan trycks ihop */
+            flex-shrink: 0;
         }
 
         .header-titles {
             flex-grow: 1;
-            text-align: left; /* Justerar texten till vänster så den fyller ytan mot höger */
-            padding-left: 5mm; /* Skapar ett litet mellanrum mellan logga och text */
+            text-align: left;
+            padding-left: 5mm;
         }
 
         h1, h2 {
             margin: 0;
             color: #4e7da1;
-            white-space: nowrap; /* Tvingar texten att hålla sig på en enda rad */
+            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis; /* Lägger till ... om texten mot förmodan blir för lång */
+            text-overflow: ellipsis;
         }
         
         h2 {
@@ -101,23 +106,37 @@
 
         @media print {
             #json-input-container { display: none; }
-            body { padding: 0; }
+            
+            /* Tvingar utskriftsmarginalen till 0 så inget klipps bort i kanterna */
+            @page {
+                margin: 0;
+            }
+            
+            body { 
+                padding: 0; 
+            }
+
+            /* Skapar den fasta marginalen (15mm) för text och tabeller här istället */
+            #report-content {
+                padding: 15mm;
+                box-sizing: border-box;
+            }
+            
             /* Tar bort markeringar för redigerbara fält vid utskrift */
             [contenteditable="true"] { outline: none; }
             
-            /* Drar upp hela behållaren i hörnet istället för bara bilden.
-               Detta gör att tabellerna under tvingas stanna kvar i flödet under loggan. */
+            /* Drar ut enbart headern utanför 15mm-marginalen så loggan hamnar i absoluta hörnet */
             .header-container {
                 margin-top: -15mm;
                 margin-left: -15mm;
                 margin-right: -15mm;
-                margin-bottom: 8mm; /* Avstånd ner till första tabellen */
-                padding-right: 15mm; /* Kompenserar för högermarginalen */
+                margin-bottom: 8mm;
+                /* Höjden på loggan (ca 20-25mm) minus 15mm marginal gör att rubriken trycks ner korrekt */
+                padding-top: 0; 
             }
             
             .logo {
-                /* Ingen absolut positionering här, så den trycker ner resten av sidan naturligt */
-                margin: 0; 
+                margin: 0;
             }
         }
 
