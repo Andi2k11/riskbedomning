@@ -72,7 +72,6 @@
             display: flex;
             align-items: center; /* Centrerar rubriken vertikalt i nivå med loggan */
             margin-bottom: 5mm;
-            position: relative;
         }
 
         .logo {
@@ -106,29 +105,19 @@
             /* Tar bort markeringar för redigerbara fält vid utskrift */
             [contenteditable="true"] { outline: none; }
             
-            /* Tvingar behållaren att sträcka sig ut i hörnen vid utskrift */
+            /* Drar upp hela behållaren i hörnet istället för bara bilden.
+               Detta gör att tabellerna under tvingas stanna kvar i flödet under loggan. */
             .header-container {
-                position: relative;
                 margin-top: -15mm;
                 margin-left: -15mm;
                 margin-right: -15mm;
-                margin-bottom: 5mm;
-                height: 30mm; /* Säkerställer en fast höjd så att tabellerna inte hoppar upp */
-                display: flex;
-                align-items: center;
+                margin-bottom: 8mm; /* Avstånd ner till första tabellen */
+                padding-right: 15mm; /* Kompenserar för högermarginalen */
             }
             
-            /* Loggan kloss i kloss med hörnet */
             .logo {
-                position: absolute;
-                top: 0;
-                left: 0;
-            }
-
-            /* Anpassar textens placering vid utskrift baserat på den absoluta loggan */
-            .header-titles {
-                padding-left: 75mm; /* 70mm för loggan + 5mm marginal */
-                padding-right: 15mm;
+                /* Ingen absolut positionering här, så den trycker ner resten av sidan naturligt */
+                margin: 0; 
             }
         }
 
