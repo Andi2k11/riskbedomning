@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Underlag för riskbedömning - Redigerbar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    
     <style>
         /* Utskriftsinställningar för A4 */
         @page {
@@ -19,7 +23,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: Calibri, Arial, sans-serif;
+            font-family: Calibri, "Open Sans", Arial, sans-serif; /* Prioriterar Calibri, sedan Open Sans */
             line-height: 1.2;
         }
 
@@ -27,7 +31,7 @@
         #json-input-container {
             background: #f4f4f4;
             padding: 20px;
-            border-bottom: 2px solid #4472C4;
+            border-bottom: 2px solid #4e7da1;
             margin-bottom: 20px;
         }
         
@@ -46,14 +50,16 @@
 
         button {
             padding: 10px 20px;
-            background-color: #4472C4;
+            background-color: #4e7da1;
             color: white;
             border: none;
             cursor: pointer;
             font-weight: bold;
         }
 
-        button:hover { background-color: #335593; }
+        button:hover { 
+            background-color: #395d7a;
+        }
 
         .edit-hint {
             font-size: 0.8em;
@@ -61,34 +67,76 @@
             font-style: italic;
         }
 
+        /* Layout-behållare för logga + rubrik */
+        .header-container {
+            display: flex;
+            align-items: center; /* Centrerar rubriken vertikalt i nivå med loggan */
+            margin-bottom: 5mm;
+            position: relative;
+        }
+
+        .logo {
+            width: 70mm; /* Bredden är 7 cm */
+            height: auto;
+            display: block;
+            flex-shrink: 0; /* Förhindrar att loggan trycks ihop */
+        }
+
+        .header-titles {
+            flex-grow: 1;
+            text-align: left; /* Justerar texten till vänster så den fyller ytan mot höger */
+            padding-left: 5mm; /* Skapar ett litet mellanrum mellan logga och text */
+        }
+
+        h1, h2 {
+            margin: 0;
+            color: #4e7da1;
+            white-space: nowrap; /* Tvingar texten att hålla sig på en enda rad */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Lägger till ... om texten mot förmodan blir för lång */
+        }
+        
+        h2 {
+            margin-top: 2mm;
+        }
+
         @media print {
             #json-input-container { display: none; }
             body { padding: 0; }
             /* Tar bort markeringar för redigerbara fält vid utskrift */
             [contenteditable="true"] { outline: none; }
+            
+            /* Tvingar behållaren att sträcka sig ut i hörnen vid utskrift */
+            .header-container {
+                position: relative;
+                margin-top: -15mm;
+                margin-left: -15mm;
+                margin-right: -15mm;
+                min-height: 25mm;
+            }
+            
+            /* Loggan kloss i kloss med hörnet */
+            .logo {
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+
+            /* Anpassar textens placering vid utskrift baserat på den absoluta loggan */
+            .header-titles {
+                padding-left: 75mm; /* 70mm för loggan + 5mm marginal */
+                padding-right: 15mm;
+            }
         }
 
         /* Redigerings-styling (visas bara på skärm) */
         [contenteditable="true"]:hover {
             background-color: #f9f9f9;
-            outline: 1px dashed #4472C4;
+            outline: 1px dashed #4e7da1;
         }
         [contenteditable="true"]:focus {
-            outline: 2px solid #4472C4;
+            outline: 2px solid #4e7da1;
             background-color: #fff;
-        }
-
-        /* Mall-styling */
-        .logo {
-            height: 25mm;
-            width: auto;
-            display: block;
-            margin-bottom: 5mm;
-        }
-
-        h1, h2 {
-            margin: 0 0 5mm 0;
-            color: #4472C4;
         }
 
         table {
@@ -96,11 +144,11 @@
             border-collapse: collapse;
             margin-bottom: 5mm;
             table-layout: fixed;
-            border: 1px solid #4472C4;
+            border: 1px solid #4e7da1;
         }
 
         th, td {
-            border: 1px solid #4472C4;
+            border: 1px solid #4e7da1;
             padding: 5px;
             text-align: left;
             vertical-align: top;
@@ -109,7 +157,7 @@
 
         .header-row {
             color: #FFFFFF !important;
-            background-color: #4472C4 !important;
+            background-color: #4e7da1 !important;
             font-weight: bold;
         }
 
@@ -128,7 +176,7 @@
         }
 
         .label-cell {
-            background-color: #4472C4 !important;
+            background-color: #4e7da1 !important;
             color: #FFFFFF !important;
             font-weight: bold;
             font-size: 9pt;
@@ -152,7 +200,7 @@
             margin-right: 1mm;
         }
 
-        /* Piktogram-URLer bibehållna */
+        /* Piktogram-URLer */
         .ghs01 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/4a/GHS-pictogram-explos.svg'); }
         .ghs02 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/6/6d/GHS-pictogram-flamme.svg'); }
         .ghs03 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/e5/GHS-pictogram-rondflam.svg'); }
@@ -178,10 +226,14 @@
     </div>
 
     <div id="report-content">
-        <img src="https://vellinge.se/images/18.127f660d19a1599e767852b/1762353813517/logotype.svg" class="logo" alt="Vellinge kommun">
-
-        <h1>Underlag för riskbedömning</h1>
-        <h2 id="display-titel" contenteditable="true">- </h2>
+   
+        <div class="header-container">
+            <img src="https://raw.githubusercontent.com/Andi2k11/riskbedomning/8cdb3e9a0e81a42e01072d3f2c7602b769692c55/Logga_nyblopp.png" class="logo" alt="Logotyp">
+            <div class="header-titles">
+                <h1>Underlag för riskbedömning</h1>
+                <h2 id="display-titel" contenteditable="true"></h2>
+            </div>
+        </div>
 
         <table id="tblKemikalier">
             <thead>
@@ -268,7 +320,7 @@
             }
 
             // Grundinfo
-            document.getElementById('display-titel').textContent = "- " + (data.TITEL || "");
+            document.getElementById('display-titel').textContent = data.TITEL || "";
             document.getElementById('display-datum').textContent = data.DATUM || "";
 
             // Kemikalier
