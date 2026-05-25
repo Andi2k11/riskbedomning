@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Underlag för riskbedömning - Redigerbar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    
     <style>
-        /* Utskriftsinställningar för A4 */
+        /* Standardinställning för skärm */
         @page {
             size: A4;
             margin: 15mm;
@@ -19,7 +23,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: Calibri, Arial, sans-serif;
+            font-family: Calibri, "Open Sans", Arial, sans-serif;
             line-height: 1.2;
         }
 
@@ -27,7 +31,7 @@
         #json-input-container {
             background: #f4f4f4;
             padding: 20px;
-            border-bottom: 2px solid #4472C4;
+            border-bottom: 2px solid #4e7da1;
             margin-bottom: 20px;
         }
         
@@ -46,14 +50,16 @@
 
         button {
             padding: 10px 20px;
-            background-color: #4472C4;
+            background-color: #4e7da1;
             color: white;
             border: none;
             cursor: pointer;
             font-weight: bold;
         }
 
-        button:hover { background-color: #335593; }
+        button:hover { 
+            background-color: #395d7a;
+        }
 
         .edit-hint {
             font-size: 0.8em;
@@ -61,33 +67,55 @@
             font-style: italic;
         }
 
-        @media print {
-            #json-input-container { display: none; }
-            body { padding: 0; }
-            [contenteditable="true"] { outline: none; }
+        /* Behållare för själva rapportinnehållet */
+        #report-content {
+            padding: 0;
         }
 
-        /* Redigerings-styling */
-        [contenteditable="true"]:hover {
-            background-color: #f9f9f9;
-            outline: 1px dashed #4472C4;
-        }
-        [contenteditable="true"]:focus {
-            outline: 2px solid #4472C4;
-            background-color: #fff;
-        }
-
-        /* Mall-styling */
-        .logo {
-            height: 25mm;
-            width: auto;
-            display: block;
+        /* Layout-behållare för logga + rubrik */
+        .header-container {
+            display: flex;
+            align-items: center;
             margin-bottom: 5mm;
         }
 
+        .logo {
+            width: 70mm; /* Bredden är 7 cm */
+            height: auto;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .header-titles {
+            flex-grow: 1;
+            text-align: left;
+            padding-left: 5mm;
+        }
+
         h1, h2 {
-            margin: 0 0 5mm 0;
-            color: #4472C4;
+            margin: 0;
+            color: #4e7da1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        h2 {
+            margin-top: 2mm;
+        }
+
+        #printable-tables {
+            width: 100%;
+        }
+
+        /* Redigerings-styling (visas bara på skärm) */
+        [contenteditable="true"]:hover {
+            background-color: #f9f9f9;
+            outline: 1px dashed #4e7da1;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid #4e7da1;
+            background-color: #fff;
         }
 
         table {
@@ -95,11 +123,11 @@
             border-collapse: collapse;
             margin-bottom: 5mm;
             table-layout: fixed;
-            border: 1px solid #4472C4;
+            border: 1px solid #4e7da1;
         }
 
         th, td {
-            border: 1px solid #4472C4;
+            border: 1px solid #4e7da1;
             padding: 5px;
             text-align: left;
             vertical-align: top;
@@ -108,7 +136,7 @@
 
         .header-row {
             color: #FFFFFF !important;
-            background-color: #4472C4 !important;
+            background-color: #4e7da1 !important;
             font-weight: bold;
         }
 
@@ -127,13 +155,16 @@
         }
 
         .label-cell {
-            background-color: #4472C4 !important;
+            background-color: #4e7da1 !important;
             color: #FFFFFF !important;
             font-weight: bold;
             font-size: 9pt;
         }
 
-        #tblAnpassning td { height: 30mm; }
+        #tblAnpassning td {
+            height: 30mm;
+        }
+
         .col-20 { width: 20%; }
         .col-40 { width: 40%; }
         .col-80 { width: 80%; }
@@ -160,170 +191,238 @@
         .ghs09 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/b/b9/GHS-pictogram-pollu.svg'); }
 
         ul { margin: 0; padding-left: 15px; }
+
+        /* UTSKRIFTSINSTÄLLNINGAR - NATURLIG SKALNING */
+        @media print {
+            #json-input-container { display: none; }
+            
+            @page {
+                margin: 0;
+            }
+            
+            body { 
+                padding: 0; 
+            }
+
+            #report-content {
+                padding: 15mm;
+                box-sizing: border-box;
+            }
+            
+            [contenteditable="true"] { outline: none; }
+            
+            .header-container {
+                margin-top: -15mm;
+                margin-left: -15mm;
+                margin-right: -15mm;
+                margin-bottom: 5mm;
+                padding-top: 0; 
+            }
+            
+            /* Krymper all text inuti tabellerna naturligt så webbläsaren drar ihop sidan */
+            .content-cell-small, 
+            .content-cell-centered, 
+            .label-cell,
+            table td, 
+            table th,
+            ul li {
+                font-size: 8pt !important;
+                padding: 3px !important; /* Tätare celler sparar mycket vertikalt utrymme */
+            }
+
+            /* Krymper även piktogrammen något vid utskrift */
+            .ghs-icon {
+                width: 8mm !important;
+                height: 8mm !important;
+            }
+
+            /* Minskar marginalerna mellan tabellerna */
+            table {
+                margin-bottom: 3mm !important;
+            }
+
+            /* Minskar höjden på lärarens anpassningsruta vid utskrift för att spara plats */
+            #tblAnpassning td {
+                height: 15mm !important;
+            }
+            #tblAnpassning td div {
+                min-height: 12mm !important;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div id="json-input-container">
-        <h3>Klistra in Base64 eller JSON-data</h3>
-        <textarea id="json-input" placeholder='Klistra in Base64-strängen eller JSON-koden här...'></textarea>
+        <h3>Klistra in JSON-data</h3>
+        <textarea id="json-input" placeholder='Klistra in JSON här...'></textarea>
         <div class="controls">
-            <button onclick="handleInput()">Generera Rapport</button>
-            <span id="status-text" class="edit-hint">Klicka i dokumentet efter generering för att finjustera texten.</span>
+            <button onclick="generateReport()">Generera Riskbedömning</button>
+            <span class="edit-hint">Efter generering: Klicka var som helst i dokumentet för att ändra texten manuellt.</span>
         </div>
     </div>
 
     <div id="report-content">
-        <img src="https://vellinge.se/siteassets/kommun-och-politik/pressrum/vellinge_kommun_logotyp_brakvalitet.png" class="logo" alt="Vellinge kommun">
-        <h1>Underlag för riskbedömning</h1>
-        <h2 id="display-titel" contenteditable="true">- </h2>
-
-        <table id="tblKemikalier">
-            <thead>
-                <tr class="header-row">
-                    <th class="col-20">Kemikalier</th>
-                    <th class="col-40">Piktogram / Faroangivelse</th>
-                    <th class="col-40">Vid incident</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <table id="tblArbetsmoment">
-            <thead>
-                <tr class="header-row">
-                    <th class="col-20">Arbetsmoment</th>
-                    <th class="col-40">Beskrivning</th>
-                    <th class="col-40">Vid incident</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <table id="tblRiskanalys">
-            <thead>
-                <tr class="header-row">
-                    <th class="col-20">Riskkälla (AFS 2011:19)</th>
-                    <th class="col-20">Beskrivning</th>
-                    <th class="col-20">S</th>
-                    <th class="col-20">K</th>
-                    <th class="col-20">Risk</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <div id="dynamic-ovrigt">
-            <table id="tblOvrigt"></table>
+   
+        <div class="header-container">
+            <img src="https://raw.githubusercontent.com/Andi2k11/riskbedomning/8cdb3e9a0e81a42e01072d3f2c7602b769692c55/Logga_nyblopp.png" class="logo" alt="Logotyp">
+            <div class="header-titles">
+                <h1>Underlag för riskbedömning</h1>
+                <h2 id="display-titel" contenteditable="true"></h2>
+            </div>
         </div>
 
-        <table id="tblAnpassning">
-            <tr>
-                <td class="col-100 content-cell-small">
-                    <strong>Specifik anpassning för elev/grupp/klass ifylles av lärare:</strong>
-                    <div contenteditable="true" style="min-height: 25mm; margin-top: 5px;">Klicka här för att skriva...</div>
-                </td>
-            </tr>
-        </table>
+        <div id="printable-tables">
+            <table id="tblKemikalier">
+                <thead>
+                    <tr class="header-row">
+                        <th class="col-20">Kemikalier</th>
+                        <th class="col-40">Piktogram / Faroangivelse</th>
+                        <th class="col-40">Vid incident</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
 
-        <table id="tblVem">
-            <tr>
-                <td class="col-equal-6 label-cell">Datum</td>
-                <td id="display-datum" class="col-equal-6 content-cell-centered" contenteditable="true"></td>
-                <td class="col-equal-6 label-cell">Klass</td>
-                <td class="col-equal-6 content-cell-centered" contenteditable="true"></td>
-                <td class="col-equal-6 label-cell">Sign</td>
-                <td class="col-equal-6 content-cell-centered" contenteditable="true"></td>
-            </tr>
-        </table>
+            <table id="tblArbetsmoment">
+                <thead>
+                    <tr class="header-row">
+                        <th class="col-20">Arbetsmoment</th>
+                        <th class="col-40">Beskrivning</th>
+                        <th class="col-40">Vid incident</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <table id="tblRiskanalys">
+                <thead>
+                    <tr class="header-row">
+                        <th class="col-20">Riskkälla (AFS 2011:19)</th>
+                        <th class="col-20">Beskrivning</th>
+                        <th class="col-20">S</th>
+                        <th class="col-20">K</th>
+                        <th class="col-20">Risk</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div id="dynamic-ovrigt">
+                <table id="tblOvrigt"></table>
+            </div>
+
+            <table id="tblAnpassning">
+                <tr>
+                    <td class="col-100 content-cell-small">
+                        <strong>Specifik anpassning för elev/grupp/klass ifylles av lärare:</strong>
+                        <div contenteditable="true" style="min-height: 25mm; margin-top: 5px;">Klicka här för att skriva...</div>
+                    </td>
+                </tr>
+            </table>
+
+            <table id="tblVem">
+                <tr>
+                    <td class="col-equal-6 label-cell">Datum</td>
+                    <td id="display-datum" class="col-equal-6 content-cell-centered" contenteditable="true"></td>
+                    <td class="col-equal-6 label-cell">Klass</td>
+                    <td class="col-equal-6 content-cell-centered" contenteditable="true"></td>
+                    <td class="col-equal-6 label-cell">Sign</td>
+                    <td class="col-equal-6 content-cell-centered" contenteditable="true"></td>
+                </tr>
+            </table>
+        </div>
     </div>
 
-<script>
-    function createList(items) {
-        if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
-        return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
-    }
+    <script>
+        function createList(items) {
+            if (!items || items.length === 0) return `<ul contenteditable="true"><li></li></ul>`;
+            return `<ul contenteditable="true">` + items.map(item => `<li>${item}</li>`).join('') + "</ul>";
+        }
 
-    function renderPiktogram(piktogramStr) {
-        if (!piktogramStr) return "";
-        const matches = piktogramStr.match(/GHS0[1-9]/gi);
-        return matches ? matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('') : "";
-    }
+        function renderPiktogram(piktogramStr) {
+            if (!piktogramStr) return "";
+            const matches = piktogramStr.match(/GHS0[1-9]/gi);
+            if (!matches) return "";
+            return matches.map(code => `<span class="ghs-icon ${code.toLowerCase()}"></span>`).join('');
+        }
 
-    function populateUI(data) {
-        document.getElementById('display-titel').textContent = "- " + (data.TITEL || "");
-        document.getElementById('display-datum').textContent = data.DATUM || "";
-
-        const kemBody = document.querySelector('#tblKemikalier tbody');
-        kemBody.innerHTML = (data.KEMIKALIER || []).map(k => `
-            <tr class="content-cell-small">
-                <td contenteditable="true"><strong>${k.KEMIKALIENAMN}</strong></td>
-                <td><div contenteditable="false">${renderPiktogram(k.PIKTOGRAM)}</div>${createList(k.FAROANGIVELSER)}</td>
-                <td contenteditable="true">${createList(k.VID_INCIDENT)}</td>
-            </tr>`).join('');
-
-        const arbBody = document.querySelector('#tblArbetsmoment tbody');
-        arbBody.innerHTML = (data.ARBETSMOMENT_LISTA || []).map(a => `
-            <tr class="content-cell-small">
-                <td contenteditable="true">${a.ARBETSMOMENT}</td>
-                <td contenteditable="true">${a.BESKRIVNING}</td>
-                <td contenteditable="true">${createList(a.VID_INCIDENT)}</td>
-            </tr>`).join('');
-
-        const riskBody = document.querySelector('#tblRiskanalys tbody');
-        riskBody.innerHTML = (data.RISK_ANALYS || []).map(r => `
-            <tr class="content-cell-small">
-                <td contenteditable="true">${r.RISKKÄLLA}</td>
-                <td contenteditable="true">${r.BESKRIVNING}</td>
-                <td contenteditable="true" style="text-align:center">${r.SANNOLIKHET}</td>
-                <td contenteditable="true" style="text-align:center">${r.KONSEKVENS}</td>
-                <td contenteditable="true"><strong>${r.RISKVAL}</strong> (${r.RISKNIVÅ || ''})</td>
-            </tr>`).join('');
-
-        const ovr = data.OVRIGT || {};
-        const labOk = ovr.LAMPLIG_SOM_LABORATION || {};
-        document.getElementById('tblOvrigt').innerHTML = `
-            <tr><td class="col-20 label-cell">Förebyggande skyddsåtgärder</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.FOREBYGGANDE_ATGARDER)}</td></tr>
-            <tr><td class="col-20 label-cell">Avfallshantering</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.AVFALLSHANTERING)}</td></tr>
-            <tr><td class="col-20 label-cell">Lämplig som laboration</td><td class="col-80 content-cell-small" contenteditable="true"><strong>${labOk.JA_NEJ || ""}</strong><br>${labOk.FORUTSATTNINGAR || ""}</td></tr>
-            <tr><td class="col-20 label-cell">Övriga kommentarer</td><td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td></tr>`;
-    }
-
-    // DENNA FUNKTION ÄR UPPDATERAD FÖR ATT VARA "SKOTTSÄKER"
-    async function handleInput() {
-        const status = document.getElementById('status-text');
-        let input = document.getElementById('json-input').value.trim();
-        if (!input) return;
-
-        try {
-            let jsonString;
-
-            if (input.startsWith('{')) {
-                jsonString = input;
-            } else {
-                // 1. Tvätta bort allt som inte är Base64-tecken
-                const cleaned = input.replace(/[^A-Za-z0-9+/=]/g, "");
-                
-                // 2. Använd en säkrare metod för att avkoda Base64 till UTF-8
-                // Vi skapar en data-URL och låter webbläsarens inbyggda fetch sköta avkodningen
-                const response = await fetch("data:text/plain;base64," + cleaned);
-                if (!response.ok) throw new Error("Base64-avkodning misslyckades.");
-                jsonString = await response.text();
+        function generateReport() {
+            const jsonText = document.getElementById('json-input').value;
+            let data;
+            
+            try {
+                data = JSON.parse(jsonText);
+            } catch (e) {
+                alert("Felaktig JSON-format: " + e.message);
+                return;
             }
 
-            // 3. Ta bort dolda kontrolltecken som kan sabba JSON.parse
-            const sanitizedJson = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-            
-            const data = JSON.parse(sanitizedJson);
-            populateUI(data);
+            // Grundinfo
+            document.getElementById('display-titel').textContent = data.TITEL || "";
+            document.getElementById('display-datum').textContent = data.DATUM || "";
 
-            status.textContent = "Rapporten har genererats!";
-            status.style.color = "green";
-        } catch (e) {
-            console.error("Detaljerat fel:", e);
-            status.innerHTML = "<strong>Fel:</strong> " + e.message;
-            status.style.color = "red";
+            // Kemikalier
+            const kemBody = document.querySelector('#tblKemikalier tbody');
+            kemBody.innerHTML = (data.KEMIKALIER || []).map(k => `
+                <tr class="content-cell-small">
+                    <td contenteditable="true"><strong>${k.KEMIKALIENAMN}</strong></td>
+                    <td>
+                        <div contenteditable="false">${renderPiktogram(k.PIKTOGRAM)}</div>
+                        ${createList(k.FAROANGIVELSER)}
+                    </td>
+                    <td contenteditable="true">${createList(k.VID_INCIDENT)}</td>
+                </tr>
+            `).join('');
+
+            // Arbetsmoment
+            const arbBody = document.querySelector('#tblArbetsmoment tbody');
+            arbBody.innerHTML = (data.ARBETSMOMENT_LISTA || []).map(a => `
+                <tr class="content-cell-small">
+                    <td contenteditable="true">${a.ARBETSMOMENT}</td>
+                    <td contenteditable="true">${a.BESKRIVNING}</td>
+                    <td contenteditable="true">${createList(a.VID_INCIDENT)}</td>
+                </tr>
+            `).join('');
+
+            // Riskanalys
+            const riskBody = document.querySelector('#tblRiskanalys tbody');
+            riskBody.innerHTML = (data.RISK_ANALYS || []).map(r => `
+                <tr class="content-cell-small">
+                    <td contenteditable="true">${r.RISKKÄLLA}</td>
+                    <td contenteditable="true">${r.BESKRIVNING}</td>
+                    <td contenteditable="true" style="text-align:center">${r.SANNOLIKHET}</td>
+                    <td contenteditable="true" style="text-align:center">${r.KONSEKVENS}</td>
+                    <td contenteditable="true"><strong>${r.RISKVAL}</strong> (${r.RISKNIVÅ || ''})</td>
+                </tr>
+            `).join('');
+
+            // Övrigt
+            const ovr = data.OVRIGT || {};
+            const labOk = ovr.LAMPLIG_SOM_LABORATION || {};
+            const ovrigtTable = document.getElementById('tblOvrigt');
+            ovrigtTable.innerHTML = `
+                <tr>
+                    <td class="col-20 label-cell">Förebyggande skyddsåtgärder</td>
+                    <td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.FOREBYGGANDE_ATGARDER)}</td>
+                </tr>
+                <tr>
+                    <td class="col-20 label-cell">Avfallshantering</td>
+                    <td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.AVFALLSHANTERING)}</td>
+                </tr>
+                <tr>
+                    <td class="col-20 label-cell">Lämplig som laboration</td>
+                    <td class="col-80 content-cell-small" contenteditable="true">
+                        <strong>${labOk.JA_NEJ || ""}</strong><br>
+                        ${labOk.FORUTSATTNINGAR || ""}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-20 label-cell">Övriga kommentarer</td>
+                    <td class="col-80 content-cell-small" contenteditable="true">${createList(ovr.OVRIGA_KOMMENTARER)}</td>
+                </tr>
+            `;
         }
-    }
-</script></body>
+    </script>
+</body>
 </html>
